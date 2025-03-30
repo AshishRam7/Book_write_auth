@@ -77,12 +77,9 @@ type QwenResponse struct {
 
 func main() {
 	// Load environment variables from .env file.
+
 	goth.UseProviders(
-		google.New(
-			"1067420833334-2hht59ia9asire3iqpd42h88boi9decu.apps.googleusercontent.com",
-			"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",
-			"http://localhost:5000/auth/google/callback",
-		),
+		google.New(os.Getenv("GOOGLE_CLIENT_ID"), os.Getenv("GOOGLE_CLIENT_SECRET"), "http://localhost:5000/auth/google/callback"),
 	)
 
 	m := map[string]string{
@@ -215,7 +212,7 @@ func main() {
 		}
 		http.SetCookie(res, &cookie)
 
-		http.Redirect(res, req, "http://localhost:4321", http.StatusFound) // Frontend is still on 4321
+		http.Redirect(res, req, "http://localhost:4321", http.StatusFound)
 	})
 
 	r.Get("/logout/{provider}", func(res http.ResponseWriter, req *http.Request) {
@@ -236,8 +233,11 @@ func main() {
 		}
 		http.SetCookie(res, &cookie)
 
-		// Redirect to the frontend login page after logout
-		http.Redirect(res, req, "http://localhost:4321/login", http.StatusFound) // Frontend is still on 4321
+		res.Header().Set("Location", "/")             // Keep this? Or redirect to login?
+		res.WriteHeader(http.StatusTemporaryRedirect) // This might conflict with http.Redirect
+
+		// Redirect to the login page after logout
+		http.Redirect(res, req, "http://localhost:4321/login", http.StatusFound)
 	})
 
 	// Add a route to initiate auth
@@ -247,9 +247,9 @@ func main() {
 
 		// try to get the user without re-authenticating
 		if gothUser, err := gothic.CompleteUserAuth(res, req); err == nil {
-			// User is already authenticated, redirect them home
+			// User is already authenticated, perhaps redirect them home?
 			fmt.Println("User already authenticated:", gothUser.Email)
-			http.Redirect(res, req, "http://localhost:4321", http.StatusFound) // Redirect to frontend home
+			http.Redirect(res, req, "http://localhost:4321", http.StatusFound) // Redirect home if already logged in
 		} else {
 			// User is not authenticated, begin the auth flow
 			gothic.BeginAuthHandler(res, req)
@@ -258,7 +258,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "5000" // Default to Port 5000
+		port = "5000"
 	}
 
 	log.Printf("Server starting on port %s\n", port)
