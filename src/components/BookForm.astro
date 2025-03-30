@@ -1,4 +1,5 @@
 ---
+// src/components/BookForm.astro
 const { title = "Create Book" } = Astro.props;
 ---
 
@@ -7,32 +8,40 @@ const { title = "Create Book" } = Astro.props;
   <h2 class="t1 g mb-8">{title}</h2>
   <form id="bookForm" class="f">
     <div>
-      <label class="l">Book Title</label>
-      <input type="text" name="title" class="i" required>
+      <label for="titleInput" class="l">Book Title</label>
+      <input type="text" name="title" id="titleInput" class="i" required>
     </div>
     <div>
-      <label class="l">Book Description</label>
-      <textarea name="description" class="i h-32" required></textarea>
+      <label for="descriptionInput" class="l">Book Description</label>
+      <textarea name="description" id="descriptionInput" class="i h-32" required></textarea>
     </div>
     <div>
-      <label class="l">Number of Chapters</label>
-      <select name="chapters" class="i">
+      <label for="chaptersInput" class="l">Number of Chapters</label>
+      <select name="chapters" id="chaptersInput" class="i">
         {Array.from({ length: 30 }, (_, i) => (
           <option value={i + 1}>{i + 1}</option>
         ))}
       </select>
     </div>
+    
+    <!--
+    <div>
+      <label for="apiKeyInput" class="l">Qwen API Key (Optional - leave blank to use server default)</label>
+      <input type="password" name="api_key" id="apiKeyInput" class="i">
+    </div>
+     -->
     <button type="submit" class="b">Create Book</button>
   </form>
 </div>
 
 <!-- Modal overlay for loading -->
-<div 
+<div
   id="loadingModal"
-  class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+  class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50" <!-- Increased opacity -->
 >
-  <div class="bg-gray-800 rounded p-6 text-gray-100 max-w-sm w-full">
-    <p class="mb-4">Creating book, please wait...</p>
+  <div class="bg-gray-800 rounded-lg p-8 text-gray-100 max-w-sm w-full shadow-xl">
+    <p class="mb-4 text-lg text-center">Creating your book, please wait...</p>
+    <p class="text-sm text-gray-400 text-center mb-6">This might take a few minutes depending on the length.</p>
     <div class="spinner mx-auto"></div>
   </div>
 </div>
@@ -40,11 +49,11 @@ const { title = "Create Book" } = Astro.props;
 <!-- Simple spinner styles (optional) -->
 <style>
   .spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
+    border: 4px solid rgba(255, 255, 255, 0.2); /* Lighter border for dark bg */
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border-left-color: #09f;
+    border-left-color: #60a5fa; /* Blue accent */
     animation: spin 1s linear infinite;
   }
   @keyframes spin {
@@ -55,15 +64,107 @@ const { title = "Create Book" } = Astro.props;
   .hidden {
     display: none;
   }
+
+  /* Add some basic prose styling for the generated content if needed */
+  .prose {
+    color: #d1d5db; /* text-gray-300 */
+  }
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: #e5e7eb; /* text-gray-200 */
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
+    line-height: 1.3;
+  }
+  .prose h1 { font-size: 2.25em; } /* text-4xl */
+  .prose h2 { font-size: 1.875em; } /* text-3xl */
+  .prose h3 { font-size: 1.5em; } /* text-2xl */
+  .prose p {
+    line-height: 1.7;
+    margin-bottom: 1.25em;
+  }
+  .prose strong {
+    color: #f9fafb; /* text-gray-50 */
+  }
+  .prose blockquote {
+    border-left: 4px solid #4b5563; /* border-gray-600 */
+    padding-left: 1em;
+    margin-left: 0;
+    margin-right: 0;
+    font-style: italic;
+    color: #9ca3af; /* text-gray-400 */
+  }
+  .prose code {
+     background-color: #374151; /* bg-gray-700 */
+     color: #e5e7eb; /* text-gray-200 */
+     padding: 0.2em 0.4em;
+     border-radius: 4px;
+     font-size: 0.9em;
+  }
+  .prose pre {
+     background-color: #1f2937; /* bg-gray-800 */
+     color: #d1d5db; /* text-gray-300 */
+     padding: 1em;
+     border-radius: 8px;
+     overflow-x: auto;
+  }
+  .prose pre code {
+    background-color: transparent;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
 </style>
 
 <script type="module">
 // 1) Import Marked from a CDN for client-side Markdown parsing.
-import { marked } from 'https://cdn.jsdelivr.net/npm/marked@4.3.0/lib/marked.esm.js';
+import { marked } from 'https://cdn.jsdelivr.net/npm/marked@4.3.0/lib/marked.esm.js'; // Using version 4 for stability, check newer versions if needed
 
 // Elements
 const form = document.getElementById('bookForm');
 const loadingModal = document.getElementById('loadingModal');
+
+// Helper function to display error messages, replacing body content
+function displayError(status, message) {
+  document.body.innerHTML = `
+    <div class="p-8 max-w-3xl mx-auto min-h-screen flex flex-col items-center justify-center">
+      <button
+        onclick="location.href='/'"
+        class="mb-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Back to Dashboard
+      </button>
+      <div class="bg-red-900/30 border border-red-700 p-6 rounded-lg w-full">
+        <h1 class="text-2xl font-bold text-red-400 mb-3">Error ${status || ''}</h1>
+        <p class="text-red-300">${message || 'An unknown error occurred.'}</p>
+      </div>
+    </div>
+  `;
+  if (loadingModal) loadingModal.classList.add('hidden'); // Ensure modal is hidden
+}
+
+// Helper function to display success message (the generated book)
+function displaySuccess(bookTitle, htmlContent) {
+   document.body.innerHTML = `
+    <div class="p-4 md:p-8 max-w-4xl mx-auto">
+      <div class="flex justify-between items-center mb-8 sticky top-0 bg-gray-900 py-4 z-10 border-b border-gray-700/50">
+        <button
+          onclick="location.href='/'"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          ← Back
+        </button>
+        <h1 class="text-xl md:text-2xl font-bold g text-center truncate px-4">${bookTitle || 'Generated Book'}</h1>
+        
+        <div></div>
+      </div>
+      
+      <article class="prose prose-invert prose-lg max-w-none leading-relaxed space-y-4 mt-4">
+        ${htmlContent}
+      </article>
+    </div>
+  `;
+}
+
 
 // Helper to extract a main title if the text starts with "# ...",
 // and to transform lines beginning with "Chapter" into "## Chapter"
@@ -73,123 +174,137 @@ function preprocessMarkdown(markdown) {
   let mainTitle = null;
   let mainTitleIndex = -1;
 
+  // Try to find the first H1 (# Title)
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
-    // Find first "# " line
-    if (!mainTitle && trimmed.startsWith('# ')) {
-      mainTitle = trimmed.replace(/^# /, '').trim();
+    if (trimmed.startsWith('# ')) {
+      mainTitle = trimmed.replace(/^#\s+/, '').trim(); // Use regex for more robust stripping
       mainTitleIndex = i;
-      break;
+      break; // Found the first H1, stop looking
     }
   }
 
-  // Remove the main title line from the text
+  // Remove the main title line from the text if found
   if (mainTitleIndex !== -1) {
     lines.splice(mainTitleIndex, 1);
   }
 
-  // Convert lines starting with "Chapter" into "## Chapter" headings
-  // so that Marked will parse them as <h2>.
+  // Convert lines starting with "Chapter" or "# Chapter" into "## Chapter" headings
   const processedLines = lines.map((line) => {
     const trimmed = line.trimStart();
-    if (trimmed.startsWith('Chapter')) {
-      // Insert "## " before "Chapter"
-      return `## ${line}`;
+    // Match "Chapter X..." or "# Chapter X..." at the start of a line
+    if (/^(#\s*)?Chapter\s+\d+/i.test(trimmed)) {
+       // Remove existing single '#' if present and ensure it's H2 (##)
+      const chapterText = trimmed.replace(/^#\s*/, '');
+      return `## ${chapterText}`;
     }
-    return line;
+    return line; // Keep other lines as is
   });
 
   return { mainTitle, body: processedLines.join('\n') };
 }
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+if (form && loadingModal) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); // Prevent default form submission
 
-  // Show modal overlay
-  loadingModal.classList.remove('hidden');
-  
-  const formData = new FormData(form);
-  const payload = {
-    title: formData.get('title'),
-    description: formData.get('description'),
-    chapters: parseInt(formData.get('chapters'), 10)
-  };
+    // Show modal overlay
+    loadingModal.style.display = 'flex'; // Use flex to enable centering items
+    loadingModal.classList.remove('hidden');
 
-  try {
-    const res = await fetch('http://localhost:5000/generate-book', { 
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-    
-    const data = await res.json();
-    
-    // Hide modal
-    loadingModal.classList.add('hidden');
 
-    if (data.error) {
-      // Replace the body content with an error message
-      document.body.innerHTML = `
-        <div class="p-8 max-w-3xl mx-auto">
-          <div class="flex justify-between items-center mb-4">
-            <button
-              onclick="location.href='/'"
-              class="px-4 py-2 bg-blue-500 text-white rounded"
-            >
-              Back
-            </button>
-            <h1 class="text-2xl font-bold">Error</h1>
-          </div>
-          <p class="text-red-400">Error: ${data.error}</p>
-        </div>
-      `;
-    } else {
-      // Preprocess the text to find the main title and convert "Chapter" lines
-      let { mainTitle, body } = preprocessMarkdown(data.book);
-      // If none found, fallback to user's input
-      const finalTitle = mainTitle || payload.title;
-      
-      // Convert to HTML
-      const htmlContent = marked.parse(body);
+    const formData = new FormData(form);
+    const payload = {
+      title: formData.get('title')?.toString() || '', // Add nullish coalescing
+      description: formData.get('description')?.toString() || '',
+      chapters: parseInt(formData.get('chapters')?.toString() || '1', 10),
+      // Include api_key only if the input exists and has a value
+      // api_key: formData.get('api_key')?.toString() || undefined
+    };
 
-      // Overwrite the entire body with just the book content
-      document.body.innerHTML = `
-        <div class="p-8 max-w-3xl mx-auto">
-          <div class="flex justify-between items-center mb-8">
-            <button
-              onclick="location.href='/'"
-              class="px-4 py-2 bg-blue-500 text-white rounded"
-            >
-              Back
-            </button>
-            <h1 class="text-2xl font-bold">${finalTitle}</h1>
-          </div>
-          <article class="prose prose-invert prose-lg max-w-none leading-relaxed space-y-4">
-            ${htmlContent}
-          </article>
-        </div>
-      `;
+    // Basic client-side validation (optional, backend validation is key)
+    if (!payload.title || !payload.description || payload.chapters <= 0) {
+        displayError(null, 'Please fill in the book title, description, and select a valid number of chapters.');
+        return;
     }
-  } catch (err) {
-    // Hide modal if fetch fails
-    loadingModal.classList.add('hidden');
 
-    document.body.innerHTML = `
-      <div class="p-8 max-w-3xl mx-auto">
-        <div class="flex justify-between items-center mb-4">
-          <button
-            onclick="location.href='/'"
-            class="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            Back
-          </button>
-          <h1 class="text-2xl font-bold">Error</h1>
-        </div>
-        <p class="text-red-400">Error: ${err.message}</p>
-      </div>
-    `;
-  }
-});
+
+    try {
+      // Ensure the endpoint is the PROTECTED one!
+      const res = await fetch('http://localhost:5000/api/generate-book', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json' // Good practice to tell server what we accept
+        },
+        body: JSON.stringify(payload),
+        credentials: 'include' // <--- Sends cookies (like the session cookie)
+      });
+
+      // --- DEBUGGING/ERROR HANDLING STEP ---
+      if (!res.ok) {
+         // Got an HTTP error status (4xx or 5xx)
+         const errorText = await res.text(); // Read error response as text first
+         console.error(`HTTP error! Status: ${res.status}, Body: ${errorText}`);
+         // Display a user-friendly error based on status/text
+         displayError(res.status, `Failed to generate book. Server responded: ${errorText || '(No specific message)'}`);
+         return; // Stop processing
+      }
+      // --- END DEBUGGING STEP ---
+
+      // If res.ok is true (status 200-299), NOW try parsing as JSON
+      const data = await res.json(); // If this fails now, the JSON itself received from backend is malformed
+
+      // Success path (but check for application-level errors in the JSON response)
+      if (data.error) {
+        // Backend sent a 2xx status but included an error message in the JSON
+        console.error("Backend returned JSON with error:", data.error);
+        displayError(res.status, `Server Error: ${data.error}`);
+
+      } else if (data.book) {
+        // Successfully got the book content!
+        // Preprocess the text to find the main title and adjust chapter headings
+        let { mainTitle, body } = preprocessMarkdown(data.book);
+        // If no H1 found in the content, fallback to the user's input title
+        const finalTitle = mainTitle || payload.title;
+
+        // Convert Markdown body to HTML using Marked
+        const htmlContent = marked.parse(body);
+
+        // Display the result
+        displaySuccess(finalTitle, htmlContent);
+
+      } else {
+        // Backend sent 2xx status but response format was unexpected (no 'book' or 'error')
+         console.error("Unexpected successful response format:", data);
+         displayError(res.status, "Received an unexpected response format from the server.");
+      }
+
+    } catch (err) {
+       // Handle network errors (server down, DNS issues, CORS blocked *before* response)
+       // OR errors during res.json() parsing (invalid JSON received)
+       console.error("Fetch/Network/JSON parsing error:", err);
+       let message = 'Could not connect to the server or process the response.';
+       if (err instanceof SyntaxError) {
+           message = 'Received an invalid response format from the server.';
+       } else if (err instanceof TypeError) {
+            message = `Network request failed. Please check your connection and the server status. (${err.message})`;
+       } else if (err instanceof Error) {
+           message = err.message; // Use error message if available
+       }
+       displayError(null, message); // Pass null for status as it's likely a network/parsing issue
+
+    } finally {
+        // Ensure loading modal is always hidden in the end, regardless of success/error
+        // Using timeout to prevent abrupt removal if content takes fraction of second to render
+        setTimeout(() => {
+            if (loadingModal) loadingModal.classList.add('hidden');
+            if (loadingModal) loadingModal.style.display = 'none'; // Ensure display:none
+        }, 100); // Small delay
+    }
+  });
+} else {
+    console.error("Could not find form or loading modal elements on the page.");
+}
+
 </script>

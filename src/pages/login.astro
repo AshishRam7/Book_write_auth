@@ -1,51 +1,52 @@
 ---
-import DashboardLayout from '../layouts/DashboardLayout.astro';
+// Login page doesn't need layout if we want a simpler look
+// import DashboardLayout from '../layouts/DashboardLayout.astro'; // Or use a simpler Layout.astro
+import Layout from '../layouts/Layout.astro'; // Using the basic layout
 ---
 
-<DashboardLayout title="Login">
-  <div class="c d">
-    <h2 class="t1 g mb-8">Welcome Back</h2>
-    <p class="text-gray-300 mb-8">Sign in to continue to Goriber Lekhok</p>
-    
-    <div class="space-y-4">
-      <a 
-        href="http://localhost:5000/auth/google" 
-        class="flex items-center justify-center gap-3 w-full py-3 px-6 bg-white text-gray-900 rounded-xl font-medium transition-all duration-300 hover:opacity-90 hover:scale-[1.02] hover:shadow-lg"
-      >
-        <svg class="w-6 h-6" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-          />
-          <path
-            fill="currentColor"
-            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-          />
-          <path
-            fill="currentColor"
-            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-          />
-          <path
-            fill="currentColor"
-            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-          />
-        </svg>
-        Continue with Google
-      </a>
+<Layout>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 font-['Space_Grotesk'] p-4">
+    <div class="w-full max-w-md bg-gray-800/50 backdrop-blur-xl p-8 rounded-2xl border border-gray-700 shadow-xl">
+      <h2 class="text-2xl font-bold tracking-tight g mb-4 text-center">Welcome to Goriber Lekhok</h2>
+      <p class="text-gray-300 mb-8 text-center">Sign in to continue</p>
+
+      <div class="space-y-4">
+        <a
+          href="http://localhost:5000/auth/auth0" class="flex items-center justify-center gap-3 w-full py-3 px-6 bg-indigo-600 text-white rounded-xl font-medium transition-all duration-300 hover:bg-indigo-700 hover:scale-[1.02] hover:shadow-lg">
+          {/* You can add an Auth0 icon here if you like */}
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+          </svg>
+          Sign in with Email/Password
+        </a>
+
+        {/* Optional: Add Google login button if you keep it */}
+        <!--
+        <a
+          href="http://localhost:5000/auth/google"
+          class="flex items-center justify-center gap-3 w-full py-3 px-6 bg-white text-gray-900 rounded-xl font-medium transition-all duration-300 hover:opacity-90 hover:scale-[1.02] hover:shadow-lg"
+        >
+           <svg class="w-6 h-6" viewBox="0 0 24 24"> ... Google SVG ... </svg>
+          Continue with Google
+        </a>
+        -->
+      </div>
+
+      {/* Optional: Display error message if redirected from guard */}
+       <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mt-4 p-3 bg-red-900/50 border border-red-700 text-red-300 rounded-lg text-sm';
+          errorDiv.textContent = `Login failed: ${error.replace(/_/g, ' ')}. Please try again.`;
+          // Insert error message above the buttons or somewhere visible
+          const buttonContainer = document.querySelector('.space-y-4');
+          if (buttonContainer) {
+              buttonContainer.parentNode.insertBefore(errorDiv, buttonContainer);
+          }
+        }
+      </script>
     </div>
   </div>
-</DashboardLayout>
-
-<script>
-  import { checkAuth } from '../scripts/auth';
-
-  // Check if user is already authenticated (synchronous check now)
-  const authStatus = checkAuth();
-
-  // No need to check loading state as it's always false
-  if (authStatus.isLoggedIn) {
-    // User is authenticated, redirect to dashboard
-    window.location.href = '/'; // Redirect to home page
-  }
-  // If not logged in, the page just renders normally.
-</script> 
+</Layout>

@@ -1,5 +1,6 @@
 ---
 import DashboardLayout from '../layouts/DashboardLayout.astro';
+import AuthGuard from '../components/AuthGuard.astro'; // Import the guard
 
 const links = [
   { href: "/long-form", title: "Long-form Book Writer" },
@@ -11,19 +12,32 @@ const links = [
 ---
 
 <DashboardLayout title="Dashboard">
-  <div class="space-y-8">
-    <div class="d float">
-      <h2 class="t2 text-gray-300">Credits Available</h2>
-      <p class="text-4xl font-bold g">250</p>
-      <p class="text-sm text-gray-400">Monthly Pack Credits</p>
-    </div>
+  <AuthGuard>  {/* Wrap protected content */}
+    <div class="space-y-8">
+      <div class="d float">
+        <h2 class="t2 text-gray-300">Credits Available</h2>
+        <p class="text-4xl font-bold g">250</p>
+        <p class="text-sm text-gray-400">Monthly Pack Credits</p>
+      </div>
 
-    <div class="gc">
-      {links.map(link => (
-        <a href={link.href} class="d dh">
-          <h3 class="t3 g">{link.title}</h3>
-        </a>
-      ))}
+      <div class="gc">
+        {links.map(link => (
+          <a href={link.href} class="d dh">
+            <h3 class="t3 g">{link.title}</h3>
+          </a>
+        ))}
+      </div>
     </div>
-  </div>
+  </AuthGuard> {/* End wrap */}
 </DashboardLayout>
+
+{/* Apply the AuthGuard similarly to other protected pages:
+    - chapter.astro
+    - contact.astro (?) - Maybe not needed?
+    - creator.astro
+    - ebook.astro
+    - guide.astro
+    - long-form.astro
+    - offers.astro
+    - tickets.astro
+ */}

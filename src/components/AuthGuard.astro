@@ -1,46 +1,55 @@
-import { useAuth } from '../contexts/AuthContext';
+---
+// No context needed here
+// Removed AuthContext import
 
-const { user, loading } = useAuth();
-
-if (loading) {
-  return (
-    <div class="flex items-center justify-center min-h-screen">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-    </div>
-  );
-}
-
-if (!user) {
-  return Astro.redirect('/login');
-}
-
-const { children } = Astro.props;
-
-<div id="auth-guard">
-  <div id="loading" class="flex items-center justify-center min-h-screen">
+// This component wraps protected content.
+// It uses a client-side script to check auth status via backend API call.
+---
+<div class="auth-guard-wrapper">
+  {/* Initial Loading State: Shown until the script runs and hides it */}
+  <div id="auth-loading" class="flex items-center justify-center min-h-screen">
     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    <p class="ml-4 text-gray-300">Checking authentication...</p>
   </div>
-  <div id="content" class="hidden">
-    {children}
+
+  {/* Content Area: Hidden initially, shown if authenticated */}
+  <div id="auth-content" class="hidden">
+    <slot />
   </div>
 </div>
 
 <script>
-  import { checkAuth } from '../scripts/auth';
+  import { checkCurrentUser } from '../scripts/auth'; // Import the updated function
 
-  const loadingEl = document.getElementById('loading');
-  const contentEl = document.getElementById('content');
+  const loadingEl = document.getElementById('auth-loading');
+  const contentEl = document.getElementById('auth-content');
 
-  checkAuth().then(({ user, loading }) => {
-    if (!loading) {
-      if (user) {
-        // User is authenticated, show content
-        if (loadingEl) loadingEl.classList.add('hidden');
-        if (contentEl) contentEl.classList.remove('hidden');
-      } else {
-        // User is not authenticated, redirect to login
-        window.location.href = '/login';
-      }
+  // Run the check as soon as the script loads
+  checkCurrentUser().then(({ user, loading, error }) => {
+    // 'loading' from the promise result isn't really needed here
+    // as the check is now complete.
+
+    if (error) {
+       console.error("Authentication check failed:", error);
+       // Redirect to login with an error message
+       window.location.href = `/login?error=${encodeURIComponent(error.replace(/\s+/g, '_'))}`; // Pass error type
+       return; // Stop further processing
     }
+
+    if (user) {
+      // User IS authenticated
+      console.log('AuthGuard: User authenticated', user);
+      if (loadingEl) loadingEl.style.display = 'none'; // Hide loading
+      if (contentEl) contentEl.classList.remove('hidden'); // Show content
+    } else {
+      // User IS NOT authenticated
+      console.log('AuthGuard: User not authenticated, redirecting to login.');
+      // Redirect to the login page
+      window.location.href = '/login';
+    }
+  }).catch(err => {
+      // Catch any unexpected errors from the promise itself
+      console.error("Unexpected error in AuthGuard script:", err);
+      window.location.href = '/login?error=unexpected_guard_error';
   });
-</script> 
+</script>

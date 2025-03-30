@@ -32,15 +32,12 @@ const { title } = Astro.props;
           <a href="/contact" class="n">Contact</a>
         </nav>
         
-        <!-- Logout Button -->
-        <div class="mt-auto p-3">
-          <a 
-            href="http://localhost:5000/logout/google"
-            class="n text-red-400 hover:bg-red-500/10"
-          >
-            Logout
-          </a>
-        </div>
+        
+      <div class="mt-auto p-3">
+        <a href="http://localhost:5000/logout/auth0" class="n text-red-400 hover:bg-red-500/10">
+          Logout
+        </a>
+      </div>
       </aside>
       <main class="flex-1 p-8 relative">
         <slot />
