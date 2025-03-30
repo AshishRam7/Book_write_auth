@@ -1,0 +1,46 @@
+import { useAuth } from '../contexts/AuthContext';
+
+const { user, loading } = useAuth();
+
+if (loading) {
+  return (
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  );
+}
+
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+const { children } = Astro.props;
+
+<div id="auth-guard">
+  <div id="loading" class="flex items-center justify-center min-h-screen">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+  <div id="content" class="hidden">
+    {children}
+  </div>
+</div>
+
+<script>
+  import { checkAuth } from '../scripts/auth';
+
+  const loadingEl = document.getElementById('loading');
+  const contentEl = document.getElementById('content');
+
+  checkAuth().then(({ user, loading }) => {
+    if (!loading) {
+      if (user) {
+        // User is authenticated, show content
+        if (loadingEl) loadingEl.classList.add('hidden');
+        if (contentEl) contentEl.classList.remove('hidden');
+      } else {
+        // User is not authenticated, redirect to login
+        window.location.href = '/login';
+      }
+    }
+  });
+</script> 
