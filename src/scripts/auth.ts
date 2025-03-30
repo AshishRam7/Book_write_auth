@@ -1,39 +1,54 @@
-// This interface might not be needed anymore if we only check cookie status
-// interface User {
-//   id: string;
-//   email: string;
-//   verified_email: boolean;
-//   name: string;
-//   picture: string;
-// }
+// src/scripts/auth.ts
 
-interface AuthCheckResult {
-  isLoggedIn: boolean;
-  loading: boolean;
+// Define the structure of the user profile we expect from the backend
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  provider: string;
+  // picture?: string; // Optional
 }
 
-// We no longer store user details globally in this script
-// let user: User | null = null;
-// let loading = true; // Loading state handled within the function now
+// Result structure for our auth check function
+export interface AuthCheckResult {
+  user: UserProfile | null;
+  loading: boolean; // Indicates if the check is in progress
+  error?: string;    // Optional error message
+}
 
 /**
- * Checks if the user is logged in by looking for the 'auth_status' cookie.
+ * Checks authentication status by fetching user data from the backend API.
+ * Relies on the browser sending the session cookie automatically.
+ * @returns Promise<AuthCheckResult>
  */
-export function checkAuth(): AuthCheckResult {
-  // Access cookies (works only in browser context)
-  const cookies = typeof document !== "undefined" ? document.cookie : "";
+export async function checkCurrentUser(): Promise<AuthCheckResult> {
+  try {
+    const response = await fetch('http://localhost:5000/api/user', {
+      method: 'GET',
+      // Crucial: Include credentials (cookies) in the request
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
 
-  // Check if the specific cookie exists and has the expected value
-  const isLoggedIn = cookies
-    .split(";")
-    .some((item) => item.trim().startsWith("auth_status=loggedin"));
-
-  // Since this check is synchronous and client-side, loading is always false
-  return { isLoggedIn: isLoggedIn, loading: false };
+    if (response.ok) {
+      const user = await response.json() as UserProfile;
+      return { user, loading: false };
+    } else if (response.status === 401) {
+      // 401 Unauthorized means the user is not logged in (session invalid or missing)
+      return { user: null, loading: false };
+    } else {
+      // Handle other unexpected errors (e.g., 500 Internal Server Error)
+      const errorText = await response.text();
+      console.error(`Auth check failed with status ${response.status}: ${errorText}`);
+      return { user: null, loading: false, error: `Server error (${response.status})` };
+    }
+  } catch (error) {
+    // Handle network errors or other fetch issues
+    console.error("Network or fetch error during auth check:", error);
+    // Check if error is an instance of Error to access message safely
+    const message = error instanceof Error ? error.message : 'Unknown fetch error';
+    return { user: null, loading: false, error: message };
+  }
 }
-
-// Removed logout function - handled by backend redirect via link click
-
-// Removed getUser function - state not managed here anymore
-
-// Removed setUser function - state not managed here anymore
