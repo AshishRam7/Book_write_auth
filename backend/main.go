@@ -510,8 +510,7 @@ func generateBook(w http.ResponseWriter, r *http.Request) {
 
 	if apiKey == "" {
 		apiKey = os.Getenv("QWEN_API_KEY")
-		print("API Key from request:", apiKey)
-		fmt.Sprintf("API Key from env: %s", apiKey)
+		
 		if apiKey == "" {
 			errResp := map[string]string{"error": "Qwen API key is missing. Configure QWEN_API_KEY on the server or provide api_key in the request."}
 			w.Header().Set("Content-Type", "application/json")
@@ -603,10 +602,6 @@ func callQwenAPI(req QwenAPIRequest, apiKey string) (string, error) {
 	// Add any other required headers, e.g., X-DashScope-SSE: enable for streaming (if used)
 
 	authHeader := httpReq.Header.Get("Authorization")
-log.Printf("DEBUG: callQwenAPI - Sending Authorization Header: %s (Length: %d)", authHeader, len(authHeader))
-if len(authHeader) > 15 { // Bearer + space + key
-   log.Printf("DEBUG: callQwenAPI - Key part starts: '%s'", authHeader[7:11]) // Log first few chars of key part
-}
 	// Create an HTTP client with a timeout matching the context.
 	client := &http.Client{Timeout: 300 * time.Second}
 
